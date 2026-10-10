@@ -1,4 +1,4 @@
-# Lightweight-Game-Launcher
+# Game-List
 A tiny terminal-style game launcher for Windows. Add your own game .exe or .bat files, name them, search, sort by playtime, cycle retro themes, and launch them from one simple list.
 
 ## Features
