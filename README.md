@@ -1,14 +1,19 @@
 # Lightweight-Game-Launcher
-A tiny terminal-style game launcher for Windows. Add your own game .exe files, name them, reorder them with the Shift + Arrow keys, and launch them from one simple list.
+A tiny terminal-style game launcher for Windows. Add your own game .exe or .bat files, name them, search, sort by playtime, cycle retro themes, and launch them from one simple list.
 
 ## Features
 
-- Terminal look: black background, white text, no mouse needed
-- Add any `.exe` and give it your own name
-- Reorder games however you like
-- Confirmation prompts before adding or removing a game
-- Undo a removal within 5 seconds
-- Your list is saved automatically
+- Terminal look with a built-in theme switcher (cycle through Classic White, Amber CRT, Matrix Green, and Cyber Blue using the T key).
+- Add any `.exe`, `.bat` or `.cmd` and give it your own name.
+- Edit names while typing with Left / Right / Home / End / Delete.
+- Reorder games however you like (when playtime sorting is turned off).
+- Real-time search/filtering by pressing `/`.
+- Automatic background playtime tracking and cumulative duration display.
+- "Last Played" timestamp recording for each game.
+- Toggleable playtime sorting (`P` key).
+- Confirmation prompts before adding or removing a game.
+- Undo a removal within 5 seconds (`U` key).
+- Your list and theme preferences are saved automatically.
 
 ## Controls
 
@@ -17,7 +22,10 @@ A tiny terminal-style game launcher for Windows. Add your own game .exe files, n
 | Up / Down | Move through the list |
 | Shift + Up / Down | Move the selected game higher / lower |
 | Enter | Launch the selected game |
-| A | Add a game (asks to confirm with Y/N, then pick the `.exe` and type a name) |
+| A | Add a game (asks to confirm with Y/N, then pick the `.exe` or `.bat` and type a name) |
+| / | Search / filter games in real-time |
+| P | Toggle playtime sorting on or off |
+| T | Cycle through color themes |
 | Delete | Remove the selected game (asks to confirm with Y/N) |
 | U | Undo the last removal (within 5 seconds) |
 | Q / Esc | Quit |
@@ -40,9 +48,11 @@ With Python installed, put `build.bat` and `gamelist.pyw` in the same folder and
 
 ## Where your data is saved
 
-Your game list is stored in `%APPDATA%\GameList\games.json`. Delete that file to reset the list.
+Your files are stored in `%APPDATA%\GameList\`:
+- `games.json` — Stores your game library, playtime counts, and last played timestamps.
+- `config.json` — Saves your active color theme choice.
 
-Made with help from [Claude](https://claude.ai).
+Made with help from [Claude](https://claude.ai) and AI collaboration.
 
 ## License
 
