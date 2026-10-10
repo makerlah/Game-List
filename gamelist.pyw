@@ -72,7 +72,7 @@ class App:
     def __init__(self, root):
         self.root = root
         root.title("games")
-        root.geometry("880x540")
+        root.geometry("1920x1080")
 
         # Load configurations and themes
         self.config = load_config()
