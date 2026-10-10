@@ -1,4 +1,3 @@
-<img width="671" height="425" alt="Capture" src="https://github.com/user-attachments/assets/cfb81ea4-7b5a-49c4-b496-22c1e54685b1" />
 # Lightweight-Game-Launcher
 A tiny terminal-style game launcher for Windows. Add your own game .exe or .bat files, name them, search, sort by playtime, cycle retro themes, and launch them from one simple list.
 
@@ -15,6 +14,12 @@ A tiny terminal-style game launcher for Windows. Add your own game .exe or .bat 
 - Confirmation prompts before adding or removing a game.
 - Undo a removal within 5 seconds (`U` key).
 - Your list and theme preferences are saved automatically.
+- <img width="671" height="425" alt="Capture" src="https://github.com/user-attachments/assets/cfb81ea4-7b5a-49c4-b496-22c1e54685b1" />
+<img width="672" height="400" alt="Capture4" src="https://github.com/user-attachments/assets/e93a224d-f7b3-4806-bbf0-5e256c7ca35d" />
+<img width="672" height="418" alt="Capture3" src="https://github.com/user-attachments/assets/a5aa9e81-a750-4f61-924d-23c076978d26" />
+<img width="675" height="424" alt="Capture2" src="https://github.com/user-attachments/assets/7921aa52-4a73-4725-97e4-a881d12b5546" />
+
+
 
 ## Controls
 
