@@ -1,3 +1,4 @@
+<img width="671" height="425" alt="Capture" src="https://github.com/user-attachments/assets/cfb81ea4-7b5a-49c4-b496-22c1e54685b1" />
 # Lightweight-Game-Launcher
 A tiny terminal-style game launcher for Windows. Add your own game .exe or .bat files, name them, search, sort by playtime, cycle retro themes, and launch them from one simple list.
 
