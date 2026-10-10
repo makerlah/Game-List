@@ -8,7 +8,6 @@ Keys:
   Enter       launch
   A           add an .exe / .bat / .cmd
   /           search / filter games
-  P           toggle playtime sorting (on/off)
   T           cycle color themes
   Delete      remove the selected game from the list
   U           undo the last removal (within 5 seconds)
@@ -21,7 +20,6 @@ import json
 import os
 import subprocess
 import sys
-import threading
 import time
 import tkinter as tk
 from tkinter import filedialog
@@ -42,30 +40,43 @@ FONT = ("Consolas", 13)
 
 def load_games():
     try:
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+        if os.path.exists(DATA_FILE):
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data if isinstance(data, list) else []
     except Exception:
-        return []
+        pass
+    return []
 
 
 def save_games(items):
-    os.makedirs(APP_DIR, exist_ok=True)
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(items, f, indent=2)
+    try:
+        os.makedirs(APP_DIR, exist_ok=True)
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(items, f, indent=2)
+    except Exception as e:
+        print(f"Error saving games: {e}")
 
 
 def load_config():
     try:
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
     except Exception:
-        return {"theme_index": 0}
+        pass
+    return {"theme_index": 0}
 
 
 def save_config(config):
-    os.makedirs(APP_DIR, exist_ok=True)
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(config, f, indent=2)
+    try:
+        os.makedirs(APP_DIR, exist_ok=True)
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=2)
+    except Exception as e:
+        print(f"Error saving config: {e}")
 
 
 class App:
@@ -74,11 +85,12 @@ class App:
         root.title("games")
         root.geometry("1920x1080")
 
-        # Load configurations and themes
         self.config = load_config()
         self.theme_idx = self.config.get("theme_index", 0)
-        theme = THEMES[self.theme_idx]
+        if self.theme_idx >= len(THEMES):
+            self.theme_idx = 0
 
+        theme = THEMES[self.theme_idx]
         self.bg = theme["bg"]
         self.fg = theme["fg"]
         self.dim = theme["dim"]
@@ -95,7 +107,7 @@ class App:
 
         self.games = load_games()
         self.sel = 0
-        self.mode = "list"      # "list", "name", "confirm", or "search"
+        self.mode = "list"
         self.confirm_action = None
         self.confirm_text = ""
         self.pending_exe = None
@@ -106,7 +118,6 @@ class App:
         self.undo_item = None  
         
         self.search_query = ""
-        self.sort_by_playtime = False
 
         root.bind("<Key>", self.on_key)
         self.draw()
@@ -125,10 +136,7 @@ class App:
     def get_active_list(self):
         games = self.games
         if self.search_query:
-            games = [g for g in games if self.search_query.lower() in g["name"].lower()]
-        
-        if self.sort_by_playtime:
-            games = sorted(games, key=lambda x: x.get("playtime", 0), reverse=True)
+            games = [g for g in games if self.search_query.lower() in str(g.get("name", "")).lower()]
         return games
 
     def draw(self):
@@ -136,9 +144,8 @@ class App:
         t.configure(state="normal")
         t.delete("1.0", "end")
         
-        sort_indicator = " [Sorted by Playtime]" if self.sort_by_playtime else ""
         theme_name = THEMES[self.theme_idx]["name"]
-        t.insert("end", f"Games:{sort_indicator}  ({theme_name} Theme)\n")
+        t.insert("end", f"Games  ({theme_name} Theme)\n")
         
         display_games = self.get_active_list()
         sel_line = 2
@@ -150,16 +157,15 @@ class App:
                 t.insert("end", "(empty - press A to add an exe)\n", "dim")
         
         for i, g in enumerate(display_games):
-            pt = g.get("playtime", 0)
-            if pt >= 60:
-                time_str = f"[{pt // 60}h {pt % 60}m]"
-            else:
-                time_str = f"[{pt}m]"
-            
+            name = str(g.get("name", "Unknown"))
+            if len(name) > 42:
+                name = name[:39] + "..."
+                
             last_played = g.get("last_played")
-            last_str = f"Last: {last_played}" if last_played else "Never played"
+            last_str = f"Last: {last_played}" if last_played else "Last: Never"
             
-            line = f"{'>' if i == self.sel else ' '} {g['name']:<25} {time_str:<10} ({last_str})\n"
+            # Wide gap (45 spaces) for the name column before Last Played
+            line = f"{'>' if i == self.sel else ' '} {name:<45} {last_str}\n"
             if i == self.sel:
                 sel_line = 2 + i
                 t.insert("end", line, "sel")
@@ -167,10 +173,10 @@ class App:
                 t.insert("end", line)
                 
         t.insert("end", "\n")
-        t.insert("end", "[up/down] move  [/] search  [p] sort  [t] theme  [enter] launch  [a] add  [del] remove  [q] quit\n", "dim")
+        t.insert("end", "[up/down] move  [/] search  [t] theme  [enter] launch  [a] add  [del] remove  [q] quit\n", "dim")
         
         if self.mode == "name":
-            exe_name = os.path.basename(self.pending_exe)
+            exe_name = os.path.basename(self.pending_exe) if self.pending_exe else ""
             t.insert("end", f"name for {exe_name} (blank = '{os.path.splitext(exe_name)[0]}', esc cancels): {self.buffer[:self.cursor]}")
             at = self.buffer[self.cursor:self.cursor + 1] or " "
             t.insert("end", at, "sel")
@@ -182,7 +188,10 @@ class App:
         else:
             t.insert("end", f"{self.status}\n", "dim")
             
-        t.see(f"{sel_line}.0")
+        try:
+            t.see(f"{sel_line}.0")
+        except Exception:
+            pass
         t.configure(state="disabled")
 
     def on_key(self, e):
@@ -191,7 +200,8 @@ class App:
             if k == "y":
                 action = self.confirm_action
                 self.mode, self.confirm_action = "list", None
-                action()
+                if action:
+                    action()
             elif k == "n":
                 self.mode, self.confirm_action = "list", None
                 self.set_status("cancelled")
@@ -209,12 +219,12 @@ class App:
         display_games = self.get_active_list()
 
         if k == "Up" and display_games:
-            if shift and not self.sort_by_playtime:
+            if shift:
                 self.move(-1)
             else:
                 self.sel = (self.sel - 1) % len(display_games)
         elif k == "Down" and display_games:
-            if shift and not self.sort_by_playtime:
+            if shift:
                 self.move(1)
             else:
                 self.sel = (self.sel + 1) % len(display_games)
@@ -222,10 +232,6 @@ class App:
             self.launch()
         elif k == "slash" or k == "bar" or e.char == "/":
             self.mode = "search"
-        elif k.lower() == "p":
-            self.sort_by_playtime = not self.sort_by_playtime
-            self.sel = 0
-            self.set_status(f"Playtime sorting: {'ON' if self.sort_by_playtime else 'OFF'}")
         elif k.lower() == "t":
             self.theme_idx = (self.theme_idx + 1) % len(THEMES)
             self.apply_theme_tags()
@@ -238,8 +244,8 @@ class App:
             self.ask("Are you sure you want to add a game? (y/n)", self.add_exe)
             return
         elif k == "Delete":
-            if display_games:
-                name = display_games[self.sel]["name"]
+            if display_games and 0 <= self.sel < len(display_games):
+                name = display_games[self.sel].get("name", "this game")
                 self.ask(f"Are you sure you want to remove '{name}'? (y/n)", self.remove)
             return
         elif k.lower() == "q" or k == "Escape":
@@ -266,10 +272,10 @@ class App:
 
     def key_name(self, e):
         if e.keysym == "Return":
-            default = os.path.splitext(os.path.basename(self.pending_exe))[0]
+            default = os.path.splitext(os.path.basename(self.pending_exe))[0] if self.pending_exe else "game"
             name = self.buffer.strip() or default
             items = load_games()
-            items.append({"name": name, "path": self.pending_exe, "playtime": 0, "last_played": None})
+            items.append({"name": name, "path": self.pending_exe, "last_played": None})
             save_games(items)
             self.mode, self.pending_exe, self.buffer, self.cursor = "list", None, "", 0
             self.games = load_games()
@@ -317,8 +323,8 @@ class App:
         items.insert(min(idx, len(items)), g)
         save_games(items)
         self.games = items
-        self.sel = min(idx, len(items) - 1)
-        self.set_status(f"restored '{g['name']}'")
+        self.sel = min(idx, max(0, len(items) - 1))
+        self.set_status(f"restored '{g.get('name', 'game')}'")
 
     def ask(self, text, action):
         self.mode = "confirm"
@@ -341,12 +347,15 @@ class App:
 
     def move(self, direction):
         display_games = self.get_active_list()
-        if not display_games or self.sort_by_playtime:
+        if not display_games or not (0 <= self.sel < len(display_games)):
             return
         
         target_game = display_games[self.sel]
-        actual_idx = next(i for i, g in enumerate(self.games) if g["path"] == target_game["path"] and g["name"] == target_game["name"])
+        actual_idx = next((i for i, g in enumerate(self.games) if g.get("path") == target_game.get("path") and g.get("name") == target_game.get("name")), -1)
         
+        if actual_idx == -1:
+            return
+
         j = actual_idx + direction
         if j < 0 or j >= len(self.games):
             return
@@ -357,57 +366,56 @@ class App:
 
     def remove(self):
         display_games = self.get_active_list()
-        if not display_games:
+        if not display_games or not (0 <= self.sel < len(display_games)):
             return
         g = display_games[self.sel]
         
-        actual_idx = next(i for i, item in enumerate(self.games) if item["path"] == g["path"] and item["name"] == g["name"])
-        
-        save_games([m for i, m in enumerate(load_games()) if i != actual_idx])
+        actual_idx = next((i for i, item in enumerate(self.games) if item.get("path") == g.get("path") and item.get("name") == g.get("name")), -1)
+        if actual_idx == -1:
+            return
+            
+        items = load_games()
+        removed_item = items.pop(actual_idx)
+        save_games(items)
         self.games = load_games()
         self.sel = min(self.sel, max(0, len(self.get_active_list()) - 1))
-        self.set_status(f"removed '{g['name']}' - press U to undo")
-        self.undo_item = (actual_idx, g)
+        self.set_status(f"removed '{g.get('name', 'game')}' - press U to undo")
+        self.undo_item = (actual_idx, removed_item)
 
     def launch(self):
         display_games = self.get_active_list()
-        if not display_games:
+        if not display_games or not (0 <= self.sel < len(display_games)):
             return
         g = display_games[self.sel]
+        path = g.get("path")
+        name = g.get("name", "game")
+        
+        if not path or not os.path.exists(path):
+            self.set_status(f"Error: Executable not found at path.")
+            return
+
         try:
-            folder = os.path.dirname(g["path"]) or None
-            if g["path"].lower().endswith((".bat", ".cmd")):
-                proc = subprocess.Popen(["cmd", "/c", g["path"]], cwd=folder,
+            folder = os.path.dirname(path) or None
+            if path.lower().endswith((".bat", ".cmd")):
+                subprocess.Popen(["cmd", "/c", path], cwd=folder,
                              creationflags=subprocess.CREATE_NO_WINDOW)
             else:
-                proc = subprocess.Popen([g["path"]], cwd=folder)
+                subprocess.Popen([path], cwd=folder)
             
-            self.set_status(f"launching {g['name']}...")
-            threading.Thread(target=self.track_playtime, args=(g, proc), daemon=True).start()
-            
-        except Exception as ex:
-            self.set_status(f"failed to launch: {ex}")
-
-    def track_playtime(self, game_ref, process):
-        start_time = time.time()
-        process.wait()  
-        duration_minutes = int((time.time() - start_time) / 60)
-        timestamp_str = time.strftime("%Y-%m-%d %H:%M")
-        
-        if duration_minutes >= 0:
+            timestamp_str = time.strftime("%Y-%m-%d %H:%M")
             items = load_games()
             for item in items:
-                if item.get("path") == game_ref.get("path") and item.get("name") == game_ref.get("name"):
-                    item["playtime"] = item.get("playtime", 0) + duration_minutes
+                if item.get("path") == path and item.get("name") == name:
                     item["last_played"] = timestamp_str
                     break
             save_games(items)
-            self.root.after(0, lambda: self.update_after_play(game_ref['name'], duration_minutes))
-
-    def update_after_play(self, name, duration):
-        self.games = load_games()
-        self.set_status(f"Finished playing '{name}' (+{duration}m)")
-        self.draw()
+            self.games = load_games()
+            
+            self.set_status(f"launching {name}...")
+            self.draw()
+            
+        except Exception as ex:
+            self.set_status(f"failed to launch: {ex}")
 
 
 def is_admin():
