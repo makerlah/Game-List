@@ -16,9 +16,11 @@ Keys:
 
 Saved as .pyw so double-clicking it opens only this window (no cmd/PowerShell).
 """
+import ctypes
 import json
 import os
 import subprocess
+import sys
 import threading
 import time
 import tkinter as tk
@@ -376,7 +378,7 @@ class App:
             folder = os.path.dirname(g["path"]) or None
             if g["path"].lower().endswith((".bat", ".cmd")):
                 proc = subprocess.Popen(["cmd", "/c", g["path"]], cwd=folder,
-                                 creationflags=subprocess.CREATE_NO_WINDOW)
+                             creationflags=subprocess.CREATE_NO_WINDOW)
             else:
                 proc = subprocess.Popen([g["path"]], cwd=folder)
             
@@ -408,7 +410,23 @@ class App:
         self.draw()
 
 
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
+
 if __name__ == "__main__":
+    if not is_admin():
+        try:
+            ctypes.windll.shell32.ShellExecuteW(
+                None, "runas", sys.executable, f'"{os.path.abspath(__file__)}"', None, 1
+            )
+        except Exception as e:
+            print(f"Failed to elevate privileges: {e}")
+        sys.exit(0)
+
     root = tk.Tk()
     App(root)
     root.mainloop()
