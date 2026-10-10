@@ -45,6 +45,8 @@ With Python installed, put `build.bat` and `gamelist.pyw` in the same folder and
 
 Your game list is stored in `%APPDATA%\GameList\games.json`. Delete that file to reset the list.
 
+Made with help from [Claude](https://claude.ai).
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
