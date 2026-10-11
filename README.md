@@ -1,5 +1,5 @@
 # Game-List
-A tiny terminal-style game launcher for Windows. Add your own game .exe or .bat files, name them, search, sort by playtime, cycle retro themes, and launch them from one simple list.
+A tiny terminal-style game launcher for Windows. Add your own game .exe or .bat files, name them, search, cycle retro themes, and launch them from one simple list.
 
 ## Features
 
@@ -10,7 +10,6 @@ A tiny terminal-style game launcher for Windows. Add your own game .exe or .bat 
 - Real-time search/filtering by pressing `/`.
 - Automatic background playtime tracking and cumulative duration display.
 - "Last Played" timestamp recording for each game.
-- Toggleable playtime sorting (`P` key).
 - Confirmation prompts before adding or removing a game.
 - Undo a removal within 5 seconds (`U` key).
 - Your list and theme preferences are saved automatically.
